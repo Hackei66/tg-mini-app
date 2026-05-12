@@ -10,10 +10,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const ADMIN_ID = "7968968395";   // ←←← YAHAN APNI ADMIN ID CHANGE KARO
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 // Load users
-let allowedUsers = ["7145835109"]; // default admin
+let allowedUsers = [ADMIN_ID];
 if (fs.existsSync(USERS_FILE)) {
     try {
         const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
@@ -21,28 +22,18 @@ if (fs.existsSync(USERS_FILE)) {
     } catch (e) {}
 }
 
-// Save users
 function saveUsers() {
     fs.writeFileSync(USERS_FILE, JSON.stringify({ allowedUsers }, null, 2));
 }
 
-// Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Get allowed users (for admin)
-app.get('/api/users', (req, res) => {
-    res.json({ allowedUsers });
-});
-
-// Check username
+// ====================== USERNAME CHECK ======================
 app.post('/check-username', async (req, res) => {
     let { username } = req.body;
     if (!username) return res.json({ exists: false });
 
     username = username.trim().toLowerCase().replace('@', '');
-    console.log(`Checking: ${username}`);
+
+    let result = { exists: false, username, profile_pic: '', full_name: '' };
 
     try {
         const device = uuidv4();
@@ -67,18 +58,14 @@ app.post('/check-username', async (req, res) => {
 
         const response = await axios.post(
             "https://i.instagram.com/api/v1/bloks/async_action/com.bloks.www.caa.ar.search.async/",
-            payload,
-            { headers, timeout: 15000 }
+            payload, { headers, timeout: 15000 }
         );
 
         const text = response.data.toString().toLowerCase();
-
-        if (text.includes(`"${username}"`) && !text.includes('"not_found"') && !text.includes('no_results')) {
-            return res.json({ exists: true, username });
+        if (text.includes(`"${username}"`) && !text.includes('"not_found"')) {
+            result.exists = true;
         }
-    } catch (error) {
-        console.log("Error in check:", error.message);
-    }
+    } catch (e) {}
 
     // Fallback
     try {
@@ -86,15 +73,64 @@ app.post('/check-username', async (req, res) => {
             headers: { 'User-Agent': 'Mozilla/5.0' },
             timeout: 10000
         });
-        if (data.includes(`"username":"${username}"`)) {
-            return res.json({ exists: true, username });
-        }
+        if (data.includes(`"username":"${username}"`)) result.exists = true;
     } catch (e) {}
 
-    res.json({ exists: false });
+    res.json(result);
 });
 
-// New API for auth
+// ====================== FULL PROFILE SCREENSHOT ======================
+app.post('/screenshot', async (req, res) => {
+    let { username } = req.body;
+    if (!username) return res.json({ success: false });
+
+    username = username.trim().toLowerCase().replace('@', '');
+
+    try {
+        const puppeteer = require('puppeteer');
+        const browser = await puppeteer.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+
+        const page = await browser.newPage();
+        await page.setViewport({ width: 1280, height: 2400 });
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+
+        await page.goto(`https://www.instagram.com/${username}/`, {
+            waitUntil: 'networkidle2',
+            timeout: 30000
+        });
+
+        await page.waitForSelector('header', { timeout: 10000 }).catch(() => {});
+
+        const screenshotDir = path.join(__dirname, 'public', 'screenshots');
+        if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
+
+        const filename = `${username}-${Date.now()}.jpg`;
+        const filepath = path.join(screenshotDir, filename);
+
+        await page.screenshot({
+            path: filepath,
+            fullPage: false,
+            quality: 90,
+            type: 'jpeg'
+        });
+
+        await browser.close();
+
+        res.json({
+            success: true,
+            imageUrl: `/screenshots/${filename}`
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: "Screenshot failed" });
+    }
+});
+
+// ====================== AUTH & ADMIN ======================
 app.post('/api/login', (req, res) => {
     const { userId } = req.body;
     if (allowedUsers.includes(userId.toUpperCase())) {
@@ -104,34 +140,31 @@ app.post('/api/login', (req, res) => {
     }
 });
 
-app.get('/api/allowed-users', (req, res) => {
-    res.json({ allowedUsers });
-});
+app.get('/api/allowed-users', (req, res) => res.json({ allowedUsers }));
 
 app.post('/api/add-user', (req, res) => {
     const { userId, adminId } = req.body;
-    if (adminId !== "7968968395") return res.json({ success: false });
+    if (adminId !== ADMIN_ID) return res.json({ success: false });
 
     const upperId = userId.toUpperCase().trim();
     if (!allowedUsers.includes(upperId)) {
         allowedUsers.push(upperId);
         saveUsers();
     }
-    res.json({ success: true, allowedUsers });
+    res.json({ success: true });
 });
 
 app.post('/api/remove-user', (req, res) => {
     const { userId, adminId } = req.body;
-    if (adminId !== "7145835109") return res.json({ success: false });
-    if (userId === "7968968395") return res.json({ success: false });
+    if (adminId !== ADMIN_ID) return res.json({ success: false });
+    if (userId === ADMIN_ID) return res.json({ success: false });
 
     allowedUsers = allowedUsers.filter(id => id !== userId);
     saveUsers();
-    res.json({ success: true, allowedUsers });
+    res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`✅ Allowed Users: ${allowedUsers.length}`);
 });
