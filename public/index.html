@@ -6,197 +6,265 @@
   <title>Assassin Monitor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { background: #0a0a0a; color: white; font-family: system-ui; }
-    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); }
-    .log-row { transition: all 0.2s; }
-    .live-dot {
-      animation: pulse 2s infinite;
-    }
+    body { background: #0a0a0a; color: white; }
+    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+    .log-row:hover { background: rgba(255,255,255,0.05); }
   </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen">
 
-  <div class="max-w-xl mx-auto p-4">
+<div class="max-w-xl mx-auto p-4">
 
-    <!-- Header -->
-    <div class="flex justify-between items-center mb-6 pt-2">
-      <div class="flex items-center gap-3">
-        <div class="text-3xl">👁️</div>
-        <div>
-          <h1 class="text-2xl font-bold text-cyan-400">ASSASSIN MONITOR</h1>
-          <p class="text-zinc-500 text-sm">Live Username Checker</p>
-        </div>
-      </div>
-      <div id="user-id-display" class="text-xs bg-zinc-900 px-3 py-1 rounded-full font-mono"></div>
-    </div>
-
-    <!-- Login -->
-    <div id="login-screen">
-      <div class="glass rounded-3xl p-8">
-        <div class="text-center mb-6">
-          <div class="text-5xl mb-4">🔥</div>
-          <h2 class="text-xl font-semibold">Enter Your User ID</h2>
-        </div>
-        <input id="user-id-input" type="text" placeholder="7968968395" 
-               class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-lg text-center font-mono focus:outline-none focus:border-cyan-500"/>
-        <button onclick="login()" 
-                class="w-full mt-6 bg-cyan-600 hover:bg-cyan-500 py-5 rounded-2xl font-bold text-lg">
-          LOGIN TO MONITOR
-        </button>
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div class="flex items-center gap-3">
+      <span class="text-4xl">👁️</span>
+      <div>
+        <h1 class="text-2xl font-bold text-cyan-400">PAID ASSASSIN</h1>
+        <p class="text-zinc-500 -mt-1">MONITOR BOT</p>
       </div>
     </div>
-
-    <!-- Main Monitor -->
-    <div id="main-screen" class="hidden">
-      <div class="glass rounded-3xl p-6 mb-6">
-        <div class="flex gap-3">
-          <input id="monitor-username" type="text" placeholder="Enter username (without @)" 
-                 class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-lg focus:outline-none focus:border-cyan-500"/>
-          <button onclick="startMonitoring()" 
-                  class="bg-cyan-600 hover:bg-cyan-500 px-10 rounded-2xl font-bold">
-            START
-          </button>
-        </div>
-      </div>
-
-      <!-- Status -->
-      <div id="status" class="hidden glass rounded-3xl p-5 mb-6 text-center">
-        <div class="flex items-center justify-center gap-3 text-green-400">
-          <span class="relative flex h-4 w-4">
-            <span class="live-dot absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
-          </span>
-          <span class="font-bold" id="current-username"></span>
-          <span class="text-sm text-zinc-400">is being monitored</span>
-        </div>
-      </div>
-
-      <!-- Logs -->
-      <div class="glass rounded-3xl p-5 h-[520px] overflow-auto font-mono text-sm" id="monitor-logs">
-        <div class="text-zinc-500 text-center py-10">
-          Monitoring logs will appear here...
-        </div>
-      </div>
-
-      <div class="flex gap-3 mt-6">
-        <button onclick="stopMonitoring()" 
-                class="flex-1 bg-red-600 hover:bg-red-700 py-4 rounded-2xl font-bold">
-          STOP MONITORING
-        </button>
-        <button onclick="logout()" 
-                class="flex-1 bg-zinc-800 hover:bg-zinc-700 py-4 rounded-2xl font-bold">
-          LOGOUT
-        </button>
-      </div>
-    </div>
+    <div id="user-info" class="font-mono text-xs bg-zinc-900 px-3 py-1 rounded-full"></div>
   </div>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    let currentUserId = null;
-    let monitorInterval = null;
-    let monitorCount = 0;
+  <!-- LOGIN -->
+  <div id="login-screen" class="glass rounded-3xl p-8">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">🔥</div>
+      <h2 class="text-xl font-semibold">Secure Login</h2>
+    </div>
+    <input id="user-id-input" type="text" placeholder="Enter User ID" 
+           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-lg font-mono focus:outline-none focus:border-cyan-500"/>
+    <button onclick="login()" class="w-full mt-6 bg-cyan-600 hover:bg-cyan-500 py-5 rounded-2xl font-bold text-lg">
+      LOGIN
+    </button>
+  </div>
 
-    // Telegram Mini App Setup
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
+  <!-- MAIN APP -->
+  <div id="main-app" class="hidden">
 
-    async function login() {
-      let inputId = document.getElementById('user-id-input').value.trim().toUpperCase();
-      if (!inputId) return alert("Enter User ID");
+    <!-- Admin Nav -->
+    <div id="admin-nav" class="hidden mb-4">
+      <button onclick="showAdminPanel()" 
+              class="bg-red-600 hover:bg-red-700 w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2">
+        👑 MANAGE USERS
+      </button>
+    </div>
 
-      const resp = await fetch('/api/login', {
+    <!-- Monitor Section -->
+    <div class="glass rounded-3xl p-6">
+      <div class="flex gap-3">
+        <input id="monitor-username" type="text" placeholder="username (without @)" 
+               class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 focus:outline-none focus:border-cyan-500"/>
+        <button onclick="startMonitor()" 
+                class="bg-cyan-600 hover:bg-cyan-500 px-8 rounded-2xl font-bold">
+          MONITOR
+        </button>
+      </div>
+    </div>
+
+    <div id="monitor-area" class="hidden mt-6">
+      <div class="glass rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span id="monitoring-username" class="font-bold text-green-400"></span>
+          </div>
+          <button onclick="stopMonitor()" class="text-red-500 hover:text-red-600 text-sm font-medium">
+            STOP
+          </button>
+        </div>
+
+        <div id="logs" class="bg-black h-[420px] overflow-auto rounded-2xl p-4 font-mono text-sm space-y-2"></div>
+      </div>
+    </div>
+
+    <button onclick="logout()" class="mt-6 w-full bg-zinc-800 hover:bg-zinc-700 py-4 rounded-2xl font-bold">
+      LOGOUT
+    </button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+  <div class="glass rounded-3xl p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
+    <h2 class="text-2xl font-bold text-red-500 mb-6 flex justify-between">
+      👑 Admin Panel
+      <span onclick="hideAdminPanel()" class="cursor-pointer text-3xl">×</span>
+    </h2>
+
+    <div class="mb-6">
+      <h3 class="text-lg mb-3">Add New User</h3>
+      <div class="flex gap-3">
+        <input id="new-user-id" placeholder="USERID123" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4"/>
+        <button onclick="addUser()" class="bg-green-600 hover:bg-green-700 px-8 rounded-2xl font-bold">ADD</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-lg mb-3">Registered Users (<span id="admin-user-count">0</span>)</h3>
+      <div id="admin-user-list" class="space-y-2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_ID = "7968968395";   // ← Yahan apni Admin ID daal do
+
+let currentUserId = null;
+let monitorInterval = null;
+let logCount = 0;
+
+// Telegram Mini App
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+async function login() {
+  let id = document.getElementById('user-id-input').value.trim().toUpperCase();
+  if (!id) return alert("Enter User ID");
+
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({userId: id})
+  });
+  const data = await res.json();
+
+  if (!data.success) return alert("❌ Invalid User ID");
+
+  currentUserId = id;
+  localStorage.setItem('monitorUser', id);
+
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  document.getElementById('user-info').textContent = `● ${id}`;
+
+  if (id === ADMIN_ID) document.getElementById('admin-nav').classList.remove('hidden');
+}
+
+async function startMonitor() {
+  let username = document.getElementById('monitor-username').value.trim().replace('@','').toLowerCase();
+  if (!username) return alert("Enter username");
+
+  document.getElementById('monitor-area').classList.remove('hidden');
+  document.getElementById('monitoring-username').textContent = `@${username}`;
+  document.getElementById('logs').innerHTML = '';
+
+  logCount = 0;
+  if (monitorInterval) clearInterval(monitorInterval);
+
+  monitorInterval = setInterval(async () => {
+    logCount++;
+    const time = new Date().toLocaleTimeString();
+
+    // Real Check
+    let status = "ACTIVE";
+    try {
+      const res = await fetch('/check-username', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ userId: inputId })
+        body: JSON.stringify({username})
       });
-      const data = await resp.json();
+      const data = await res.json();
+      status = data.exists ? "✅ ACTIVE" : "❌ NOT FOUND / BANNED";
+    } catch(e) {}
 
-      if (!data.success) {
-        return alert("❌ Invalid User ID");
-      }
+    const log = document.createElement('div');
+    log.className = "log-row flex justify-between py-2 px-3 bg-zinc-900/50 rounded-xl";
+    log.innerHTML = `
+      <span class="text-cyan-400">#${logCount}</span>
+      <span class="text-zinc-400">${time}</span>
+      <span class="font-bold ${status.includes('✅') ? 'text-green-400' : 'text-red-400'}">${status}</span>
+      <span class="text-white">@${username}</span>
+    `;
+    document.getElementById('logs').appendChild(log);
+    document.getElementById('logs').scrollTop = 99999;
+  }, 2200);
+}
 
-      currentUserId = inputId;
-      localStorage.setItem('monitorUser', currentUserId);
+function stopMonitor() {
+  if (monitorInterval) clearInterval(monitorInterval);
+  document.getElementById('monitor-area').classList.add('hidden');
+}
 
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('main-screen').classList.remove('hidden');
-      document.getElementById('user-id-display').textContent = currentUserId;
-    }
+// ============== ADMIN PANEL ==============
+async function showAdminPanel() {
+  if (currentUserId !== ADMIN_ID) return;
+  document.getElementById('admin-panel').classList.remove('hidden');
+  loadAdminUsers();
+}
 
-    async function startMonitoring() {
-      let username = document.getElementById('monitor-username').value.trim().replace('@','').toLowerCase();
-      if (!username) return alert("Enter username");
+function hideAdminPanel() {
+  document.getElementById('admin-panel').classList.add('hidden');
+}
 
-      const status = document.getElementById('status');
-      const logs = document.getElementById('monitor-logs');
+async function loadAdminUsers() {
+  const res = await fetch('/api/allowed-users');
+  const data = await res.json();
+  
+  document.getElementById('admin-user-count').textContent = data.allowedUsers.length;
+  
+  const container = document.getElementById('admin-user-list');
+  container.innerHTML = '';
 
-      status.classList.remove('hidden');
-      document.getElementById('current-username').textContent = `@${username}`;
-      logs.innerHTML = `<div class="text-cyan-400 text-center py-4">🔍 Started monitoring @${username}</div>`;
+  data.allowedUsers.forEach(id => {
+    const div = document.createElement('div');
+    div.className = "flex justify-between items-center bg-zinc-900 p-4 rounded-2xl";
+    div.innerHTML = `
+      <span class="font-mono">${id}</span>
+      ${id !== ADMIN_ID ? `<button onclick="removeAdminUser('${id}')" class="text-red-500 text-sm">Remove</button>` : `<span class="text-red-400 text-sm">ADMIN</span>`}
+    `;
+    container.appendChild(div);
+  });
+}
 
-      monitorCount = 0;
-      if (monitorInterval) clearInterval(monitorInterval);
+async function addUser() {
+  const newId = document.getElementById('new-user-id').value.trim().toUpperCase();
+  if (!newId) return;
 
-      monitorInterval = setInterval(async () => {
-        monitorCount++;
-        const time = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  await fetch('/api/add-user', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({userId: newId, adminId: ADMIN_ID})
+  });
+  document.getElementById('new-user-id').value = '';
+  loadAdminUsers();
+}
 
-        const log = document.createElement('div');
-        log.className = "log-row flex justify-between py-3 border-b border-zinc-800 last:border-none text-xs";
-        log.innerHTML = `
-          <span class="text-zinc-500">#${monitorCount}</span>
-          <span class="text-zinc-400">${time}</span>
-          <span class="text-green-400 font-bold">ACTIVE</span>
-          <span class="text-white">@${username}</span>
-        `;
-        logs.appendChild(log);
-        logs.scrollTop = logs.scrollHeight;
+async function removeAdminUser(userId) {
+  if (confirm(`Remove ${userId}?`)) {
+    await fetch('/api/remove-user', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({userId, adminId: ADMIN_ID})
+    });
+    loadAdminUsers();
+  }
+}
 
-        // Optional: Real check every 10 seconds
-        if (monitorCount % 4 === 0) {
-          try {
-            const resp = await fetch('/check-username', {
-              method: 'POST',
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({username})
-            });
-            const data = await resp.json();
-            if (!data.exists) {
-              const alertLog = document.createElement('div');
-              alertLog.className = "bg-red-500/20 border border-red-500 p-3 rounded-2xl text-red-400 text-center my-4";
-              alertLog.textContent = `⚠️ @${username} might be banned!`;
-              logs.appendChild(alertLog);
-            }
-          } catch(e){}
-        }
-      }, 1800); // Fast monitoring
-    }
+function logout() {
+  if (confirm("Logout?")) {
+    localStorage.removeItem('monitorUser');
+    location.reload();
+  }
+}
 
-    function stopMonitoring() {
-      if (monitorInterval) clearInterval(monitorInterval);
-      document.getElementById('status').classList.add('hidden');
-      alert("Monitoring Stopped");
-    }
-
-    function logout() {
-      if (confirm("Logout?")) {
-        localStorage.removeItem('monitorUser');
-        location.reload();
-      }
-    }
-
-    // Auto Login
-    window.onload = () => {
-      const saved = localStorage.getItem('monitorUser');
-      if (saved) {
-        currentUserId = saved;
-        document.getElementById('login-screen').classList.add('hidden');
-        document.getElementById('main-screen').classList.remove('hidden');
-        document.getElementById('user-id-display').textContent = currentUserId;
-      }
-    };
-  </script>
+// Auto Login
+window.onload = () => {
+  const saved = localStorage.getItem('monitorUser');
+  if (saved) {
+    currentUserId = saved;
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('main-app').classList.remove('hidden');
+    document.getElementById('user-info').textContent = `● ${saved}`;
+    if (saved === ADMIN_ID) document.getElementById('admin-nav').classList.remove('hidden');
+  }
+};
+</script>
 </body>
 </html>
