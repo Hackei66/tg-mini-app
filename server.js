@@ -67,7 +67,7 @@ app.post('/check-username', async (req, res) => {
         }
     } catch (e) {}
 
-    // Fallback
+    // Fallback Check
     try {
         const { data } = await axios.get(`https://www.instagram.com/${username}/`, {
             headers: { 'User-Agent': 'Mozilla/5.0' },
@@ -79,33 +79,45 @@ app.post('/check-username', async (req, res) => {
     res.json(result);
 });
 
-// ====================== FULL PROFILE SCREENSHOT ======================
+// ====================== FULL PROFILE SCREENSHOT (Fixed) ======================
 app.post('/screenshot', async (req, res) => {
     let { username } = req.body;
-    if (!username) return res.json({ success: false });
+    if (!username) return res.json({ success: false, message: "Username required" });
 
     username = username.trim().toLowerCase().replace('@', '');
 
     try {
         const puppeteer = require('puppeteer');
+
         const browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--window-size=1280,2400'
+            ]
         });
 
         const page = await browser.newPage();
         await page.setViewport({ width: 1280, height: 2400 });
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
+
+        console.log(`📸 Taking screenshot for: ${username}`);
 
         await page.goto(`https://www.instagram.com/${username}/`, {
             waitUntil: 'networkidle2',
-            timeout: 30000
+            timeout: 45000
         });
 
-        await page.waitForSelector('header', { timeout: 10000 }).catch(() => {});
+        await page.waitForSelector('header', { timeout: 15000 }).catch(() => {});
 
         const screenshotDir = path.join(__dirname, 'public', 'screenshots');
-        if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
+        if (!fs.existsSync(screenshotDir)) {
+            fs.mkdirSync(screenshotDir, { recursive: true });
+        }
 
         const filename = `${username}-${Date.now()}.jpg`;
         const filepath = path.join(screenshotDir, filename);
@@ -113,11 +125,13 @@ app.post('/screenshot', async (req, res) => {
         await page.screenshot({
             path: filepath,
             fullPage: false,
-            quality: 90,
+            quality: 85,
             type: 'jpeg'
         });
 
         await browser.close();
+
+        console.log(`✅ Screenshot saved: ${filename}`);
 
         res.json({
             success: true,
@@ -125,8 +139,11 @@ app.post('/screenshot', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
-        res.json({ success: false, message: "Screenshot failed" });
+        console.error("Screenshot Error:", error.message);
+        res.json({ 
+            success: false, 
+            message: "Screenshot failed. Profile may be private or temporarily blocked." 
+        });
     }
 });
 
@@ -167,4 +184,5 @@ app.post('/api/remove-user', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`👑 Admin ID: ${ADMIN_ID}`);
 });
