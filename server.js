@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const ADMIN_ID = "7968968395";   // ←←← YAHAN APNI ADMIN ID CHANGE KARO
+const ADMIN_ID = "7968968395";   // ← Apni Admin ID yahan daalo
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 // Load users
@@ -33,7 +33,7 @@ app.post('/check-username', async (req, res) => {
 
     username = username.trim().toLowerCase().replace('@', '');
 
-    let result = { exists: false, username, profile_pic: '', full_name: '' };
+    let result = { exists: false, username };
 
     try {
         const device = uuidv4();
@@ -50,10 +50,6 @@ app.post('/check-username', async (req, res) => {
             'User-Agent': "Instagram 370.1.0.43.96 Android (34/14; 450dpi; 1080x2207; samsung; SM-A235F; a23; qcom; en_IN; 704872281)",
             'accept-language': "en-IN, en-US",
             'x-ig-app-id': "567067343352427",
-            'x-ig-device-id': device,
-            'x-ig-family-device-id': family,
-            'x-ig-android-id': android,
-            'x-mid': Buffer.from(Math.random().toString(36).substring(2, 20)).toString('base64').replace(/=/g, ''),
         };
 
         const response = await axios.post(
@@ -67,19 +63,10 @@ app.post('/check-username', async (req, res) => {
         }
     } catch (e) {}
 
-    // Fallback Check
-    try {
-        const { data } = await axios.get(`https://www.instagram.com/${username}/`, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            timeout: 10000
-        });
-        if (data.includes(`"username":"${username}"`)) result.exists = true;
-    } catch (e) {}
-
     res.json(result);
 });
 
-// ====================== FULL PROFILE SCREENSHOT (Fixed) ======================
+// ====================== FULL PROFILE SCREENSHOT (FIXED) ======================
 app.post('/screenshot', async (req, res) => {
     let { username } = req.body;
     if (!username) return res.json({ success: false, message: "Username required" });
@@ -87,6 +74,7 @@ app.post('/screenshot', async (req, res) => {
     username = username.trim().toLowerCase().replace('@', '');
 
     try {
+        // Dynamic import to avoid issues
         const puppeteer = require('puppeteer');
 
         const browser = await puppeteer.launch({
@@ -95,43 +83,32 @@ app.post('/screenshot', async (req, res) => {
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
                 '--disable-gpu',
-                '--window-size=1280,2400'
-            ]
+                '--disable-software-rasterizer'
+            ],
+            timeout: 60000
         });
 
         const page = await browser.newPage();
         await page.setViewport({ width: 1280, height: 2400 });
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
 
-        console.log(`📸 Taking screenshot for: ${username}`);
+        console.log(`📸 Screenshot attempt for: ${username}`);
 
         await page.goto(`https://www.instagram.com/${username}/`, {
             waitUntil: 'networkidle2',
             timeout: 45000
         });
 
-        await page.waitForSelector('header', { timeout: 15000 }).catch(() => {});
-
         const screenshotDir = path.join(__dirname, 'public', 'screenshots');
-        if (!fs.existsSync(screenshotDir)) {
-            fs.mkdirSync(screenshotDir, { recursive: true });
-        }
+        if (!fs.existsSync(screenshotDir)) fs.mkdirSync(screenshotDir, { recursive: true });
 
         const filename = `${username}-${Date.now()}.jpg`;
         const filepath = path.join(screenshotDir, filename);
 
-        await page.screenshot({
-            path: filepath,
-            fullPage: false,
-            quality: 85,
-            type: 'jpeg'
-        });
+        await page.screenshot({ path: filepath, fullPage: false, quality: 85, type: 'jpeg' });
 
         await browser.close();
-
-        console.log(`✅ Screenshot saved: ${filename}`);
 
         res.json({
             success: true,
@@ -142,7 +119,7 @@ app.post('/screenshot', async (req, res) => {
         console.error("Screenshot Error:", error.message);
         res.json({ 
             success: false, 
-            message: "Screenshot failed. Profile may be private or temporarily blocked." 
+            message: "Screenshot failed. Profile may be private or server issue." 
         });
     }
 });
@@ -150,11 +127,8 @@ app.post('/screenshot', async (req, res) => {
 // ====================== AUTH & ADMIN ======================
 app.post('/api/login', (req, res) => {
     const { userId } = req.body;
-    if (allowedUsers.includes(userId.toUpperCase())) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false });
-    }
+    if (allowedUsers.includes(userId.toUpperCase())) res.json({ success: true });
+    else res.json({ success: false });
 });
 
 app.get('/api/allowed-users', (req, res) => res.json({ allowedUsers }));
@@ -173,8 +147,7 @@ app.post('/api/add-user', (req, res) => {
 
 app.post('/api/remove-user', (req, res) => {
     const { userId, adminId } = req.body;
-    if (adminId !== ADMIN_ID) return res.json({ success: false });
-    if (userId === ADMIN_ID) return res.json({ success: false });
+    if (adminId !== ADMIN_ID || userId === ADMIN_ID) return res.json({ success: false });
 
     allowedUsers = allowedUsers.filter(id => id !== userId);
     saveUsers();
@@ -183,6 +156,5 @@ app.post('/api/remove-user', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`👑 Admin ID: ${ADMIN_ID}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
