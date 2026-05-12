@@ -10,19 +10,20 @@
   <style>
     body { background: #0a0a0a; color: white; }
     .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-    .profile-img { border: 4px solid #22d3ee; }
+    .log-row:hover { background: rgba(255,255,255,0.05); }
   </style>
 </head>
 <body class="min-h-screen">
 
-<div class="max-w-2xl mx-auto p-4">
+<div class="max-w-xl mx-auto p-4">
 
+  <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <div class="flex items-center gap-3">
       <span class="text-4xl">👁️</span>
       <div>
         <h1 class="text-2xl font-bold text-cyan-400">PAID ASSASSIN</h1>
-        <p class="text-zinc-500">MONITOR BOT</p>
+        <p class="text-zinc-500 -mt-1">MONITOR BOT</p>
       </div>
     </div>
     <div id="user-info" class="font-mono text-xs bg-zinc-900 px-3 py-1 rounded-full"></div>
@@ -35,7 +36,7 @@
       <h2 class="text-xl font-semibold">Secure Login</h2>
     </div>
     <input id="user-id-input" type="text" placeholder="Enter User ID" 
-           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-lg font-mono"/>
+           class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-lg font-mono focus:outline-none focus:border-cyan-500"/>
     <button onclick="login()" class="w-full mt-6 bg-cyan-600 hover:bg-cyan-500 py-5 rounded-2xl font-bold text-lg">
       LOGIN
     </button>
@@ -44,47 +45,82 @@
   <!-- MAIN APP -->
   <div id="main-app" class="hidden">
 
+    <!-- Admin Nav -->
     <div id="admin-nav" class="hidden mb-4">
-      <button onclick="showAdminPanel()" class="bg-red-600 hover:bg-red-700 w-full py-3 rounded-2xl font-bold">👑 MANAGE USERS</button>
+      <button onclick="showAdminPanel()" 
+              class="bg-red-600 hover:bg-red-700 w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2">
+        👑 MANAGE USERS
+      </button>
     </div>
 
+    <!-- Monitor Section -->
     <div class="glass rounded-3xl p-6">
       <div class="flex gap-3">
-        <input id="monitor-username" type="text" placeholder="username without @" 
+        <input id="monitor-username" type="text" placeholder="username (without @)" 
                class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 focus:outline-none focus:border-cyan-500"/>
-        <button onclick="checkProfile()" class="bg-cyan-600 hover:bg-cyan-500 px-8 rounded-2xl font-bold">CHECK</button>
-      </div>
-    </div>
-
-    <!-- Profile + Screenshot -->
-    <div id="profile-card" class="hidden mt-6 glass rounded-3xl p-6">
-      <div class="text-center">
-        <h3 id="profile-username" class="text-2xl font-bold"></h3>
-        <div id="status-badge" class="inline-block mt-3 px-6 py-2 rounded-full text-sm font-bold"></div>
-      </div>
-
-      <div class="mt-8">
-        <button onclick="takeFullScreenshot()" 
-                class="w-full bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-2">
-          📸 TAKE FULL PROFILE SCREENSHOT
+        <button onclick="startMonitor()" 
+                class="bg-cyan-600 hover:bg-cyan-500 px-8 rounded-2xl font-bold">
+          MONITOR
         </button>
       </div>
+    </div>
 
-      <div id="screenshot-result" class="hidden mt-6">
-        <p class="text-cyan-400 mb-3">Full Profile Screenshot:</p>
-        <img id="full-screenshot" class="w-full rounded-2xl border border-zinc-700" src="" alt="">
+    <div id="monitor-area" class="hidden mt-6">
+      <div class="glass rounded-3xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span id="monitoring-username" class="font-bold text-green-400"></span>
+          </div>
+          <button onclick="stopMonitor()" class="text-red-500 hover:text-red-600 text-sm font-medium">
+            STOP
+          </button>
+        </div>
+
+        <div id="logs" class="bg-black h-[420px] overflow-auto rounded-2xl p-4 font-mono text-sm space-y-2"></div>
       </div>
     </div>
 
-    <button onclick="logout()" class="mt-8 w-full bg-zinc-800 hover:bg-zinc-700 py-4 rounded-2xl font-bold">LOGOUT</button>
+    <button onclick="logout()" class="mt-6 w-full bg-zinc-800 hover:bg-zinc-700 py-4 rounded-2xl font-bold">
+      LOGOUT
+    </button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-panel" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+  <div class="glass rounded-3xl p-8 w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
+    <h2 class="text-2xl font-bold text-red-500 mb-6 flex justify-between">
+      👑 Admin Panel
+      <span onclick="hideAdminPanel()" class="cursor-pointer text-3xl">×</span>
+    </h2>
+
+    <div class="mb-6">
+      <h3 class="text-lg mb-3">Add New User</h3>
+      <div class="flex gap-3">
+        <input id="new-user-id" placeholder="USERID123" class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-5 py-4"/>
+        <button onclick="addUser()" class="bg-green-600 hover:bg-green-700 px-8 rounded-2xl font-bold">ADD</button>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="text-lg mb-3">Registered Users (<span id="admin-user-count">0</span>)</h3>
+      <div id="admin-user-list" class="space-y-2"></div>
+    </div>
   </div>
 </div>
 
 <script>
-const ADMIN_ID = "7968968395";
+const ADMIN_ID = "7145835109";   // ← Yahan apni Admin ID daal do
 
 let currentUserId = null;
+let monitorInterval = null;
+let logCount = 0;
 
+// Telegram Mini App
 Telegram.WebApp.ready();
 Telegram.WebApp.expand();
 
@@ -103,6 +139,7 @@ async function login() {
 
   currentUserId = id;
   localStorage.setItem('monitorUser', id);
+
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
   document.getElementById('user-info').textContent = `● ${id}`;
@@ -110,62 +147,104 @@ async function login() {
   if (id === ADMIN_ID) document.getElementById('admin-nav').classList.remove('hidden');
 }
 
-async function checkProfile() {
+async function startMonitor() {
   let username = document.getElementById('monitor-username').value.trim().replace('@','').toLowerCase();
   if (!username) return alert("Enter username");
 
-  document.getElementById('profile-card').classList.remove('hidden');
-  document.getElementById('screenshot-result').classList.add('hidden');
+  document.getElementById('monitor-area').classList.remove('hidden');
+  document.getElementById('monitoring-username').textContent = `@${username}`;
+  document.getElementById('logs').innerHTML = '';
 
-  try {
-    const res = await fetch('/check-username', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username})
-    });
-    const data = await res.json();
+  logCount = 0;
+  if (monitorInterval) clearInterval(monitorInterval);
 
-    document.getElementById('profile-username').textContent = `@${username}`;
-    
-    if (data.exists) {
-      document.getElementById('status-badge').innerHTML = `✅ ACCOUNT ACTIVE`;
-      document.getElementById('status-badge').className = `bg-green-500/20 text-green-400 px-6 py-2 rounded-full`;
-    } else {
-      document.getElementById('status-badge').innerHTML = `❌ NOT FOUND / BANNED`;
-      document.getElementById('status-badge').className = `bg-red-500/20 text-red-400 px-6 py-2 rounded-full`;
-    }
-  } catch(e) {}
+  monitorInterval = setInterval(async () => {
+    logCount++;
+    const time = new Date().toLocaleTimeString();
+
+    // Real Check
+    let status = "ACTIVE";
+    try {
+      const res = await fetch('/check-username', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username})
+      });
+      const data = await res.json();
+      status = data.exists ? "✅ ACTIVE" : "❌ NOT FOUND / BANNED";
+    } catch(e) {}
+
+    const log = document.createElement('div');
+    log.className = "log-row flex justify-between py-2 px-3 bg-zinc-900/50 rounded-xl";
+    log.innerHTML = `
+      <span class="text-cyan-400">#${logCount}</span>
+      <span class="text-zinc-400">${time}</span>
+      <span class="font-bold ${status.includes('✅') ? 'text-green-400' : 'text-red-400'}">${status}</span>
+      <span class="text-white">@${username}</span>
+    `;
+    document.getElementById('logs').appendChild(log);
+    document.getElementById('logs').scrollTop = 99999;
+  }, 2200);
 }
 
-async function takeFullScreenshot() {
-  const username = document.getElementById('monitor-username').value.trim().replace('@','').toLowerCase();
-  if (!username) return;
+function stopMonitor() {
+  if (monitorInterval) clearInterval(monitorInterval);
+  document.getElementById('monitor-area').classList.add('hidden');
+}
 
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = '⏳ TAKING SCREENSHOT...';
-  btn.disabled = true;
+// ============== ADMIN PANEL ==============
+async function showAdminPanel() {
+  if (currentUserId !== ADMIN_ID) return;
+  document.getElementById('admin-panel').classList.remove('hidden');
+  loadAdminUsers();
+}
 
-  try {
-    const res = await fetch('/screenshot', {
+function hideAdminPanel() {
+  document.getElementById('admin-panel').classList.add('hidden');
+}
+
+async function loadAdminUsers() {
+  const res = await fetch('/api/allowed-users');
+  const data = await res.json();
+  
+  document.getElementById('admin-user-count').textContent = data.allowedUsers.length;
+  
+  const container = document.getElementById('admin-user-list');
+  container.innerHTML = '';
+
+  data.allowedUsers.forEach(id => {
+    const div = document.createElement('div');
+    div.className = "flex justify-between items-center bg-zinc-900 p-4 rounded-2xl";
+    div.innerHTML = `
+      <span class="font-mono">${id}</span>
+      ${id !== ADMIN_ID ? `<button onclick="removeAdminUser('${id}')" class="text-red-500 text-sm">Remove</button>` : `<span class="text-red-400 text-sm">ADMIN</span>`}
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function addUser() {
+  const newId = document.getElementById('new-user-id').value.trim().toUpperCase();
+  if (!newId) return;
+
+  await fetch('/api/add-user', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({userId: newId, adminId: ADMIN_ID})
+  });
+  document.getElementById('new-user-id').value = '';
+  loadAdminUsers();
+}
+
+async function removeAdminUser(userId) {
+  if (confirm(`Remove ${userId}?`)) {
+    await fetch('/api/remove-user', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username})
+      body: JSON.stringify({userId, adminId: ADMIN_ID})
     });
-    const data = await res.json();
-
-    if (data.success) {
-      document.getElementById('full-screenshot').src = data.imageUrl;
-      document.getElementById('screenshot-result').classList.remove('hidden');
-    } else {
-      alert("Screenshot failed");
-    }
-  } catch(e) {
-    alert("Error");
+    loadAdminUsers();
   }
-
-  btn.innerHTML = originalText;
-  btn.disabled = false;
 }
 
 function logout() {
