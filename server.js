@@ -13,7 +13,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const USERS_FILE = path.join(__dirname, 'users.json');
 
 // Load users
-let allowedUsers = ["7968968395"]; // default admin
+let allowedUsers = ["7145835109"]; // default admin
 if (fs.existsSync(USERS_FILE)) {
     try {
         const data = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
@@ -122,7 +122,7 @@ app.post('/api/add-user', (req, res) => {
 
 app.post('/api/remove-user', (req, res) => {
     const { userId, adminId } = req.body;
-    if (adminId !== "7968968395") return res.json({ success: false });
+    if (adminId !== "7145835109") return res.json({ success: false });
     if (userId === "7968968395") return res.json({ success: false });
 
     allowedUsers = allowedUsers.filter(id => id !== userId);
