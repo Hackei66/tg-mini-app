@@ -1,0 +1,15 @@
+{
+  "name": "paid-assassin-report-bot",
+  "version": "1.0.0",
+  "description": "Instagram Mass Report Tool",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "axios": "^1.8.0",
+    "uuid": "^11.0.0",
+    "cors": "^2.8.5"
+  }
+}
