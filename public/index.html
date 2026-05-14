@@ -3,39 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Assassin Monitor</title>
+  <title>Ig Monitor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { background: #0a0a0a; color: white; }
-    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-    .log-row:hover { background: rgba(255,255,255,0.05); }
+    body { 
+      background: #0a0a0a; 
+      color: white; 
+    }
+    .glass { 
+      background: rgba(255,255,255,0.08); 
+      backdrop-filter: blur(12px); 
+      border: 1px solid rgba(255,255,255,0.1); 
+    }
+    .log-row:hover { 
+      background: rgba(255,255,255,0.05); 
+    }
+    .banned { 
+      animation: bannedPulse 1.5s infinite; 
+    }
+    @keyframes bannedPulse {
+      0%, 100% { color: #ef4444; }
+      50% { color: #f87171; }
+    }
   </style>
 </head>
 <body class="min-h-screen">
-
 <div class="max-w-xl mx-auto p-4">
 
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <div class="flex items-center gap-3">
-      <span class="text-4xl">👁️</span>
+      <span class="text-4xl">©️</span>
       <div>
-        <h1 class="text-2xl font-bold text-cyan-400">PAID ASSASSIN</h1>
-        <p class="text-zinc-500 -mt-1">MONITOR BOT</p>
+        <h1 class="text-2xl font-bold text-cyan-400">PAID MONITOR BOT</h1>
+        <p class="text-zinc-500 -mt-1">Dev:- @iownpy</p>
       </div>
     </div>
     <div id="user-info" class="font-mono text-xs bg-zinc-900 px-3 py-1 rounded-full"></div>
   </div>
 
-  <!-- LOGIN -->
+  <!-- LOGIN SCREEN -->
   <div id="login-screen" class="glass rounded-3xl p-8">
     <div class="text-center mb-8">
-      <div class="text-6xl mb-4">🔥</div>
-      <h2 class="text-xl font-semibold">Secure Login</h2>
+      <div class="text-6xl mb-4">🔑</div>
+      <h2 class="text-xl font-semibold">Enter User Id</h2>
     </div>
-    <input id="user-id-input" type="text" placeholder="Enter User ID" 
+    <input id="user-id-input" type="text" placeholder="Enter User ID"
            class="w-full bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 text-center text-lg font-mono focus:outline-none focus:border-cyan-500"/>
     <button onclick="login()" class="w-full mt-6 bg-cyan-600 hover:bg-cyan-500 py-5 rounded-2xl font-bold text-lg">
       LOGIN
@@ -44,10 +59,9 @@
 
   <!-- MAIN APP -->
   <div id="main-app" class="hidden">
-
     <!-- Admin Nav -->
     <div id="admin-nav" class="hidden mb-4">
-      <button onclick="showAdminPanel()" 
+      <button onclick="showAdminPanel()"
               class="bg-red-600 hover:bg-red-700 w-full py-3 rounded-2xl font-bold flex items-center justify-center gap-2">
         👑 MANAGE USERS
       </button>
@@ -56,9 +70,9 @@
     <!-- Monitor Section -->
     <div class="glass rounded-3xl p-6">
       <div class="flex gap-3">
-        <input id="monitor-username" type="text" placeholder="username (without @)" 
+        <input id="monitor-username" type="text" placeholder="username (without @)"
                class="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-5 focus:outline-none focus:border-cyan-500"/>
-        <button onclick="startMonitor()" 
+        <button onclick="startMonitor()"
                 class="bg-cyan-600 hover:bg-cyan-500 px-8 rounded-2xl font-bold">
           MONITOR
         </button>
@@ -73,14 +87,18 @@
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
             </span>
-            <span id="monitoring-username" class="font-bold text-green-400"></span>
+            <span id="monitoring-username" class="font-bold text-cyan-400"></span>
           </div>
-          <button onclick="stopMonitor()" class="text-red-500 hover:text-red-600 text-sm font-medium">
-            STOP
+          <button onclick="stopMonitor()" class="text-red-500 hover:text-red-600 text-sm font-medium flex items-center gap-1">
+            <i class="fas fa-stop"></i> STOP
           </button>
         </div>
-
-        <div id="logs" class="bg-black h-[420px] overflow-auto rounded-2xl p-4 font-mono text-sm space-y-2"></div>
+        
+        <!-- Live Status -->
+        <div id="status" class="text-center py-5 rounded-2xl mb-4 font-bold text-lg border"></div>
+        
+        <!-- Logs -->
+        <div id="logs" class="bg-black h-[380px] overflow-auto rounded-2xl p-4 font-mono text-sm space-y-2"></div>
       </div>
     </div>
 
@@ -97,7 +115,6 @@
       👑 Admin Panel
       <span onclick="hideAdminPanel()" class="cursor-pointer text-3xl">×</span>
     </h2>
-
     <div class="mb-6">
       <h3 class="text-lg mb-3">Add New User</h3>
       <div class="flex gap-3">
@@ -105,7 +122,6 @@
         <button onclick="addUser()" class="bg-green-600 hover:bg-green-700 px-8 rounded-2xl font-bold">ADD</button>
       </div>
     </div>
-
     <div>
       <h3 class="text-lg mb-3">Registered Users (<span id="admin-user-count">0</span>)</h3>
       <div id="admin-user-list" class="space-y-2"></div>
@@ -114,13 +130,12 @@
 </div>
 
 <script>
-const ADMIN_ID = "7145835109";   // ← Yahan apni Admin ID daal do
+const ADMIN_ID = "7145835109";   // Change this to your admin ID
 
 let currentUserId = null;
 let monitorInterval = null;
 let logCount = 0;
 
-// Telegram Mini App
 Telegram.WebApp.ready();
 Telegram.WebApp.expand();
 
@@ -135,11 +150,11 @@ async function login() {
   });
   const data = await res.json();
 
-  if (!data.success) return alert("❌ Invalid User ID");
+  if (!data.success) return alert("❌ Invalid or Expired User ID!\nContact Admin");
 
   currentUserId = id;
   localStorage.setItem('monitorUser', id);
-
+  
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('main-app').classList.remove('hidden');
   document.getElementById('user-info').textContent = `● ${id}`;
@@ -154,16 +169,14 @@ async function startMonitor() {
   document.getElementById('monitor-area').classList.remove('hidden');
   document.getElementById('monitoring-username').textContent = `@${username}`;
   document.getElementById('logs').innerHTML = '';
-
   logCount = 0;
-  if (monitorInterval) clearInterval(monitorInterval);
+
+  stopMonitor();
 
   monitorInterval = setInterval(async () => {
     logCount++;
     const time = new Date().toLocaleTimeString();
 
-    // Real Check
-    let status = "ACTIVE";
     try {
       const res = await fetch('/check-username', {
         method: 'POST',
@@ -171,25 +184,42 @@ async function startMonitor() {
         body: JSON.stringify({username})
       });
       const data = await res.json();
-      status = data.exists ? "✅ ACTIVE" : "❌ NOT FOUND / BANNED";
-    } catch(e) {}
 
-    const log = document.createElement('div');
-    log.className = "log-row flex justify-between py-2 px-3 bg-zinc-900/50 rounded-xl";
-    log.innerHTML = `
-      <span class="text-cyan-400">#${logCount}</span>
-      <span class="text-zinc-400">${time}</span>
-      <span class="font-bold ${status.includes('✅') ? 'text-green-400' : 'text-red-400'}">${status}</span>
-      <span class="text-white">@${username}</span>
-    `;
-    document.getElementById('logs').appendChild(log);
-    document.getElementById('logs').scrollTop = 99999;
-  }, 2200);
+      const statusDiv = document.getElementById('status');
+
+      if (data.exists) {
+        statusDiv.innerHTML = `✅ @${username} IS ACTIVE`;
+        statusDiv.className = "text-center py-5 rounded-2xl mb-4 font-bold text-lg bg-green-900/30 border border-green-500 text-green-400";
+      } else {
+        statusDiv.innerHTML = `🚫 @${username} BANNED / NOT FOUND`;
+        statusDiv.className = "text-center py-5 rounded-2xl mb-4 font-bold text-lg banned bg-red-900/30 border border-red-500 text-red-400";
+      }
+
+      // Add Log
+      const log = document.createElement('div');
+      log.className = "log-row flex justify-between py-2 px-3 bg-zinc-900/50 rounded-xl";
+      log.innerHTML = `
+        <span class="text-cyan-400">#${logCount}</span>
+        <span class="text-zinc-400">${time}</span>
+        <span class="font-bold ${data.exists ? 'text-green-400' : 'text-red-400'}">
+          ${data.exists ? 'ACTIVE' : 'BANNED'}
+        </span>
+        <span class="text-white">@${username}</span>
+      `;
+      document.getElementById('logs').appendChild(log);
+      document.getElementById('logs').scrollTop = 99999;
+
+    } catch(e) {
+      console.error("Check failed", e);
+    }
+  }, 8000); // Every 8 seconds
 }
 
 function stopMonitor() {
-  if (monitorInterval) clearInterval(monitorInterval);
-  document.getElementById('monitor-area').classList.add('hidden');
+  if (monitorInterval) {
+    clearInterval(monitorInterval);
+    monitorInterval = null;
+  }
 }
 
 // ============== ADMIN PANEL ==============
@@ -204,28 +234,28 @@ function hideAdminPanel() {
 }
 
 async function loadAdminUsers() {
-  const res = await fetch('/api/allowed-users');
-  const data = await res.json();
-  
-  document.getElementById('admin-user-count').textContent = data.allowedUsers.length;
-  
-  const container = document.getElementById('admin-user-list');
-  container.innerHTML = '';
+  try {
+    const res = await fetch('/api/allowed-users');
+    const data = await res.json();
+    document.getElementById('admin-user-count').textContent = data.allowedUsers.length;
 
-  data.allowedUsers.forEach(id => {
-    const div = document.createElement('div');
-    div.className = "flex justify-between items-center bg-zinc-900 p-4 rounded-2xl";
-    div.innerHTML = `
-      <span class="font-mono">${id}</span>
-      ${id !== ADMIN_ID ? `<button onclick="removeAdminUser('${id}')" class="text-red-500 text-sm">Remove</button>` : `<span class="text-red-400 text-sm">ADMIN</span>`}
-    `;
-    container.appendChild(div);
-  });
+    const container = document.getElementById('admin-user-list');
+    container.innerHTML = '';
+    data.allowedUsers.forEach(id => {
+      const div = document.createElement('div');
+      div.className = "flex justify-between items-center bg-zinc-900 p-4 rounded-2xl";
+      div.innerHTML = `
+        <span class="font-mono">${id}</span>
+        ${id !== ADMIN_ID ? `<button onclick="removeAdminUser('${id}')" class="text-red-500 text-sm hover:text-red-600">Remove</button>` : `<span class="text-red-400 text-sm">ADMIN</span>`}
+      `;
+      container.appendChild(div);
+    });
+  } catch(e) {}
 }
 
 async function addUser() {
   const newId = document.getElementById('new-user-id').value.trim().toUpperCase();
-  if (!newId) return;
+  if (!newId) return alert("Enter User ID");
 
   await fetch('/api/add-user', {
     method: 'POST',
@@ -237,7 +267,7 @@ async function addUser() {
 }
 
 async function removeAdminUser(userId) {
-  if (confirm(`Remove ${userId}?`)) {
+  if (confirm(`Remove user ${userId}?`)) {
     await fetch('/api/remove-user', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -265,6 +295,8 @@ window.onload = () => {
     if (saved === ADMIN_ID) document.getElementById('admin-nav').classList.remove('hidden');
   }
 };
+
+window.addEventListener('beforeunload', stopMonitor);
 </script>
 </body>
 </html>
